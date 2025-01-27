@@ -77,6 +77,7 @@ class MicroBuiltinDataAllocator : public TfLiteBridgeBuiltinDataAllocator {
  private:
   IPersistentBufferAllocator* persistent_allocator_;
 
+ public:
   TF_LITE_REMOVE_VIRTUAL_DELETE
 };
 

@@ -44,7 +44,8 @@ class LinearMemoryPlanner : public MicroMemoryPlanner {
   size_t buffer_offsets_[kMaxBufferCount];
   int current_buffer_count_;
   size_t next_free_offset_;
-
+  
+ public:
   TF_LITE_REMOVE_VIRTUAL_DELETE
 };
 

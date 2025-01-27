@@ -16,17 +16,17 @@ limitations under the License.
 #include "tensorflow/lite/micro/system_setup.h"
 
 #include <limits>
-#include <cstdio>
 
 #include "tensorflow/lite/micro/debug_log.h"
-
-#if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
-#define ARDUINO_EXCLUDE_CODE
-#endif  // defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
 
 #ifndef ARDUINO_EXCLUDE_CODE
 
 #include "Arduino.h"
+
+#ifndef ARDUINO_ARCH_MBED
+#include "system_ArduinoRingBuffer.h"
+using namespace arduino;
+#endif
 
 // The Arduino DUE uses a different object for the default serial port shown in
 // the monitor than most other models, so make sure we pick the right one. See
@@ -37,32 +37,15 @@ limitations under the License.
 #define DEBUG_SERIAL_OBJECT (Serial)
 #endif
 
-extern "C" void DebugLog(const char* s, va_list args) { 
-#ifndef TF_LITE_STRIP_ERROR_STRINGS
-	constexpr int kMaxLogLen = 256;
-	char log_buffer[kMaxLogLen];
-  DebugVsnprintf(log_buffer, kMaxLogLen, s, args);
-	DEBUG_SERIAL_OBJECT.print(log_buffer); 
-#endif  // TF_LITE_STRIP_ERROR_STRINGS
-}
-
-extern "C" int DebugVsnprintf(char* buffer, size_t buf_size, const char* format,
-                   va_list vlist)
-{
-  #ifndef TF_LITE_STRIP_ERROR_STRINGS
-  return vsnprintf(buffer, buf_size, format, vlist);
-  #else
-  return 0;
-  #endif
-}
+extern "C" void DebugLog(const char* s) { DEBUG_SERIAL_OBJECT.print(s); }
 
 namespace tflite {
 
-constexpr ulong kSerialMaxInitWait = 4000;  // milliseconds
+constexpr unsigned long kSerialMaxInitWait = 4000;  // milliseconds
 
 void InitializeTarget() {
   DEBUG_SERIAL_OBJECT.begin(9600);
-  ulong start_time = millis();
+  unsigned long start_time = millis();
   while (!DEBUG_SERIAL_OBJECT) {
     // allow for Arduino IDE Serial Monitor synchronization
     if (millis() - start_time > kSerialMaxInitWait) {
@@ -78,7 +61,7 @@ namespace test_over_serial {
 // Change baud rate on default serial port
 void SerialChangeBaudRate(const int baud) {
   DEBUG_SERIAL_OBJECT.begin(baud);
-  ulong start_time = millis();
+  unsigned long start_time = millis();
   while (!DEBUG_SERIAL_OBJECT) {
     // allow for Arduino IDE Serial Monitor synchronization
     if (millis() - start_time > tflite::kSerialMaxInitWait) {
@@ -112,7 +95,7 @@ std::pair<size_t, char*> SerialReadLine(int timeout) {
     _ring_buffer.clear();
   }
 
-  ulong start_time = millis();
+  unsigned long start_time = millis();
 
   while (true) {
     int value = DEBUG_SERIAL_OBJECT.read();
@@ -136,7 +119,7 @@ std::pair<size_t, char*> SerialReadLine(int timeout) {
     if (timeout < 0) {
       // wait forever
       continue;
-    } else if (millis() - start_time >= static_cast<ulong>(timeout)) {
+    } else if (millis() - start_time >= static_cast<unsigned long>(timeout)) {
       // timeout
       return std::make_pair(0UL, reinterpret_cast<char*>(NULL));
     }

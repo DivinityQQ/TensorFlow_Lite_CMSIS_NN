@@ -73,7 +73,7 @@ void MicroContextReportOpError(struct TfLiteContext* context,
                                const char* format, ...) {
   va_list args;
   va_start(args, format);
-  VMicroPrintf(format, args);
+  Log(format, args);
   va_end(args);
 }
 
